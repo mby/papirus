@@ -1,0 +1,8 @@
+# editor
+/.vscode
+
+# build
+/bin
+
+# deps
+/MoltenVK
