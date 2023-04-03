@@ -1,38 +1,55 @@
-# papirus client
+# Papirus UI Library
 
+Papirus is a cutting-edge reactive UI library designed to bring a seamless and intuitive user interface experience across platforms. Leveraging the power of Vulkan and advanced compiler techniques, Papirus simplifies UI development and maximizes performance.
 
-## steps for vulkan
+### Features
 
-the initial setup is too f-ing big, but here it is.
+- Reactive UI components for fast, responsive design
+- Built on Vulkan for top-notch performance and cross-platform compatibility
+- Utilizes advanced compiler techniques for efficient rendering
+- Easy-to-use API for streamlined development
+- Open-source and community-driven
 
-- select the best physical device
-- create a logical device handle with the device selected above
-- create a surface and double buffered swapchain using the device created above
-- create the image view and frame buffers for the aformentioned swapchain
-- create a render pass to clear to screen first, than draw the appropriately selected framebuffer
-- create a graphics pipeline and reference our newly created render pass to it
-- create a CommandPool and ask for a CommandBuffer then send these commands:
-    - start this render pass
-    - use this graphics pipeline
-    - draw 3 vertices
-    - end this render pass
+## Getting Started
 
-then in the main loop:
+Follow these steps to get started with Papirus:
 
-- we aquire a framebuffer from the swapchain
-- submit the CommandBuffer to the graphics queue
-- wait for the drawing operation to finish
-- send the framebuffer back to the swapchain
+### Prerequisites
 
-this part is directly stolen from [vulkan-tutorial.com](vulkan-tutorial.com).
+- Ensure you have Vulkan SDK installed on your system.
+- A C20 compatible compiler is required.
 
-- Create a VkInstance
-- Select a supported graphics card (VkPhysicalDevice)
-- Create a VkDevice and VkQueue for drawing and presentation
-- Create a window, window surface and swap chain
-- Wrap the swap chain images into VkImageView
-- Create a render pass that specifies the render targets and usage
-- Create framebuffers for the render pass
-- Set up the graphics pipeline
-- Allocate and record a command buffer with the draw commands for every possible swap chain image
-- Draw frames by acquiring images, submitting the right draw command buffer and returning the images back to the swap chain
+### Installation
+Clone the repository:
+
+```bash
+git clone https://github.com/mby/papirus-client.git
+```
+
+Navigate to the project directory:
+
+```bash
+cd papirus-client
+```
+Build the project using GNU make:
+
+```bash
+make
+
+```
+
+## Contributing
+
+We welcome contributions from the community! Check out our [Contributing Guide](CONTRIBUTING.md) for more information on how to get involved.
+
+## License
+
+Papirus is released under the MIT License.
+
+## Support
+
+If you encounter any issues or have questions, please open a GitHub issue or reach out to the maintainers.
+
+## Acknowledgements
+
+We are grateful to the community and all contributors for their support and contributions to this project. Let's continue to revolutionize UI development together!

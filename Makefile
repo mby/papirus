@@ -1,11 +1,8 @@
 # config
 
-INCS = `pkg-config --cflags glfw3` \
-	-I /Users/bugrayildiz/.bin/VulkanSDK/1.3.243.0/macOS/include
+INCS = `pkg-config --cflags glfw3 vulkan`
 
-LIBS = `pkg-config --libs glfw3` \
-	-L /Users/bugrayildiz/.bin/VulkanSDK/1.3.243.0/macOS/lib -lMoltenVK \
-	-Wl,-rpath,/Users/bugrayildiz/.bin/VulkanSDK/1.3.243.0/macOS/lib
+LIBS = `pkg-config --libs glfw3 vulkan`
 
 CC = cc -g3 $(LIBS) $(INCS)
 
