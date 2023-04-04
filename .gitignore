@@ -1,8 +1,5 @@
 # editor
-/.vscode
+/compile_flags.txt
 
 # build
 /bin
-
-# deps
-/MoltenVK
