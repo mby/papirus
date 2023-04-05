@@ -15,6 +15,14 @@ int graphicsQueueIndex = -1, presentQueueIndex = -1;
 
 VkDevice device = NULL;
 
+VkSwapchainKHR swapChain = NULL;
+VkFormat swapChainFormat;
+VkExtent2D extent;
+VkImage *swapChainImages = NULL;
+uint32_t swapChainImageCount = 0;
+VkImageView *swapChainImageViews = NULL;
+uint32_t swapChainImageViewCount = 0;
+
 void initWindow()
 {
 	if (!glfwInit()) {
@@ -164,12 +172,171 @@ void createLogicalDevice()
 	createInfo.pQueueCreateInfos = queueCreateInfos;
 	createInfo.pEnabledFeatures = &deviceFeatures;
 
+	static const char *deviceExtensions[] = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	};
+	createInfo.enabledExtensionCount = 1;
+	createInfo.ppEnabledExtensionNames = deviceExtensions;
+
 	VkResult result =
 		vkCreateDevice(physicalDevice, &createInfo, NULL, &device);
 	if (result != VK_SUCCESS) {
 		printf("Failed to create logical device: %d\n", result);
 		exit(EXIT_FAILURE);
 	}
+}
+
+void createSwapChain()
+{
+	// choose a surface format
+	VkSurfaceFormatKHR surfaceFormat;
+	{
+		uint32_t formatCount;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface,
+						     &formatCount, NULL);
+
+		VkSurfaceFormatKHR *formats =
+			malloc(sizeof(VkSurfaceFormatKHR) * formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface,
+						     &formatCount, formats);
+
+		for (int i = 0; i < formatCount; i++) {
+			if (formats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
+			    formats[i].colorSpace ==
+				    VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+				surfaceFormat = formats[i];
+				break;
+			}
+		}
+
+		if (surfaceFormat.format == VK_FORMAT_UNDEFINED) {
+			printf("Failed to find a suitable surface format\n");
+			exit(EXIT_FAILURE);
+		}
+
+		free(formats);
+		swapChainFormat = surfaceFormat.format;
+	}
+
+	// choose a present mode
+	VkPresentModeKHR presetMode = VK_PRESENT_MODE_FIFO_KHR;
+	{
+		uint32_t presentModeCount;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(
+			physicalDevice, surface, &presentModeCount, NULL);
+
+		VkPresentModeKHR *presentModes =
+			malloc(sizeof(VkPresentModeKHR) * presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice,
+							  surface,
+							  &presentModeCount,
+							  presentModes);
+
+		for (int i = 0; i < presentModeCount; i++) {
+			if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
+				presetMode = presentModes[i];
+				break;
+			}
+		}
+	}
+
+	// choose a swap extent
+	VkSurfaceCapabilitiesKHR capabilities;
+	{
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+			physicalDevice, surface, &capabilities);
+
+		if (capabilities.currentExtent.width != UINT32_MAX) {
+			extent = capabilities.currentExtent;
+		} else {
+			int width, height;
+			glfwGetFramebufferSize(window, &width, &height);
+
+			extent.width = width;
+			extent.height = height;
+		}
+	}
+
+	// create the swap chain
+	VkSwapchainCreateInfoKHR createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	createInfo.surface = surface;
+	createInfo.minImageCount = capabilities.minImageCount + 1;
+	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageColorSpace = surfaceFormat.colorSpace;
+	createInfo.imageExtent = extent;
+	createInfo.imageArrayLayers = 1;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	uint32_t queueIndices[] = { graphicsQueueIndex, presentQueueIndex };
+	if (graphicsQueueIndex != presentQueueIndex) {
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		createInfo.queueFamilyIndexCount = 2;
+		createInfo.pQueueFamilyIndices = queueIndices;
+	} else {
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0;
+		createInfo.pQueueFamilyIndices = NULL;
+	}
+
+	createInfo.preTransform = capabilities.currentTransform;
+	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	createInfo.presentMode = presetMode;
+	createInfo.clipped = VK_TRUE;
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	VkResult result =
+		vkCreateSwapchainKHR(device, &createInfo, NULL, &swapChain);
+	if (result != VK_SUCCESS) {
+		printf("Failed to create swap chain: %d\n", result);
+		exit(EXIT_FAILURE);
+	}
+
+	// create the swap chain images
+	vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, NULL);
+	swapChainImages = malloc(sizeof(VkImage) * swapChainImageCount);
+	vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount,
+				swapChainImages);
+}
+
+void createImageViews()
+{
+	swapChainImageViews = malloc(sizeof(VkImageView) * swapChainImageCount);
+
+	for (int i = 0; i < swapChainImageCount; i++) {
+		VkImageViewCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = swapChainImages[i];
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = swapChainFormat;
+		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.subresourceRange.aspectMask =
+			VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.baseMipLevel = 0;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+		createInfo.subresourceRange.layerCount = 1;
+
+		VkResult result = vkCreateImageView(device, &createInfo, NULL,
+						    &swapChainImageViews[i]);
+		if (result != VK_SUCCESS) {
+			printf("Failed to create image view: %d\n", result);
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+void createRenderPass()
+{
+	// TODO: figure this out
+}
+
+void createGraphicsPipeline()
+{
+	// TODO: figure this out
 }
 
 void initVulkan()
@@ -179,6 +346,12 @@ void initVulkan()
 
 	pickPhysicalDevice();
 	createLogicalDevice();
+
+	createSwapChain();
+	createImageViews();
+
+	createRenderPass();
+	createGraphicsPipeline();
 }
 
 int main()
@@ -190,6 +363,13 @@ int main()
 		glfwPollEvents();
 	}
 
+	for (int i = 0; i < swapChainImageCount; i++) {
+		vkDestroyImageView(device, swapChainImageViews[i], NULL);
+	}
+	free(swapChainImageViews);
+	free(swapChainImages);
+
+	vkDestroySwapchainKHR(device, swapChain, NULL);
 	vkDestroyDevice(device, NULL);
 	vkDestroySurfaceKHR(instance, surface, NULL);
 	vkDestroyInstance(instance, NULL);
