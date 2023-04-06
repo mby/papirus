@@ -1,10 +1,12 @@
 # editor
 /.vs
 /.vscode
-/compile_flags.txt
 
 # build
 /bin
+/compile_commands*
+/compile_flags.txt
+/.cache
 **Makefile
 **.make
 **.sln
