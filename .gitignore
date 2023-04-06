@@ -1,5 +1,11 @@
 # editor
+/.vs
+/.vscode
 /compile_flags.txt
 
 # build
 /bin
+**Makefile
+**.sln
+**.vcxproj
+**.vcxproj.user

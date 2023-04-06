@@ -48,7 +48,7 @@ void initWindow()
 
 void createInstance()
 {
-	VkApplicationInfo appInfo = {};
+	VkApplicationInfo appInfo = {0};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Papirus";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -56,7 +56,7 @@ void createInstance()
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
-	VkInstanceCreateInfo createInfo = {};
+	VkInstanceCreateInfo createInfo = {0};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
@@ -65,17 +65,20 @@ void createInstance()
 		glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
 	// include VK_KHR_PORTABILITY_subset
+	const int extensionsCount = glfwExtensionCount + 1;
 	const char **extensions =
-		calloc(glfwExtensionCount + 1, sizeof(char *));
+		calloc(extensionsCount, sizeof(char *));
 	int i;
 	for (i = 0; i < glfwExtensionCount; i++) {
 		extensions[i] = glfwExtensions[i];
 	}
+
+#ifdef __APPLE__
 	extensions[i++] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
-
 	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 
-	createInfo.enabledExtensionCount = glfwExtensionCount + 1;
+	createInfo.enabledExtensionCount = i;
 	createInfo.ppEnabledExtensionNames = extensions;
 
 	VkResult result = vkCreateInstance(&createInfo, NULL, &instance);
@@ -156,6 +159,7 @@ void createLogicalDevice()
 	float queuePriority = 1.0f;
 
 	for (int i = 0; i < 2; i++) {
+		queueCreateInfos[i] = (VkDeviceQueueCreateInfo){ 0 };
 		queueCreateInfos[i].sType =
 			VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 		queueCreateInfos[i].queueFamilyIndex = queueIndices[i];
@@ -164,9 +168,9 @@ void createLogicalDevice()
 	}
 
 	// TODO
-	VkPhysicalDeviceFeatures deviceFeatures = {};
+	VkPhysicalDeviceFeatures deviceFeatures = {0};
 
-	VkDeviceCreateInfo createInfo = {};
+	VkDeviceCreateInfo createInfo = {0};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.queueCreateInfoCount = 2;
 	createInfo.pQueueCreateInfos = queueCreateInfos;
@@ -258,7 +262,7 @@ void createSwapChain()
 	}
 
 	// create the swap chain
-	VkSwapchainCreateInfoKHR createInfo = {};
+	VkSwapchainCreateInfoKHR createInfo = {0};
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	createInfo.surface = surface;
 	createInfo.minImageCount = capabilities.minImageCount + 1;
@@ -304,7 +308,7 @@ void createImageViews()
 	swapChainImageViews = malloc(sizeof(VkImageView) * swapChainImageCount);
 
 	for (int i = 0; i < swapChainImageCount; i++) {
-		VkImageViewCreateInfo createInfo = {};
+		VkImageViewCreateInfo createInfo = {0};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		createInfo.image = swapChainImages[i];
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
