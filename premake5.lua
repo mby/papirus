@@ -20,6 +20,19 @@ project "papirus"
 	language "C"
 	files { "src/main.c" }
 
+	filter "system:macosx"
+		includedirs {
+			"/usr/local/include",
+			"/opt/homebrew/opt/glfw/include"
+		}
+
+		libdirs {
+			"/usr/local/lib",
+			"/opt/homebrew/opt/glfw/lib"
+		}
+
+		links { "vulkan", "glfw" }
+
 	filter "system:windows"
 		includedirs {
 			"C:\\VulkanSDK\\1.3.243.0\\Include",
